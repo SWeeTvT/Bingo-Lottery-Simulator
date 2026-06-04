@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lucky Bingo Simulator</title>
+  <style>
+    :root {
+      --pink: #ff4ff4;
+      --hot-pink: #ff2ccf;
+      --gold: #ffd85a;
+      --orange: #e88a25;
+      --brown: #8c4f1f;
+      --blue: #35c9ff;
+      --blue-deep: #078fc7;
+      --cream: #fff0c6;
+      --text: #5a290d;
+      --glass: rgba(255, 224, 149, .72);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 30%, rgba(93, 255, 62, .45), transparent 17rem),
+        radial-gradient(circle at 88% 26%, rgba(255, 54, 209, .35), transparent 18rem),
+        radial-gradient(circle at 70% 80%, rgba(85, 255, 221, .24), transparent 16rem),
+        linear-gradient(130deg, #24202e 0%, #251526 42%, #111827 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 74px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 72px);
+      opacity: .8;
+      pointer-events: none;
+    }
+
+    .page {
+      position: relative;
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      padding: 18px 14px 28px;
+    }
+
+    .title {
+      text-align: center;
+      margin: 0 auto -14px;
+      font-size: clamp(42px, 7.4vw, 92px);
+      line-height: .9;
+      letter-spacing: 3px;
+      color: #fff;
+      -webkit-text-stroke: 2px #f52a7d;
+      text-shadow:
+        0 0 8px #fff,
+        0 0 18px #ff39e7,
+        4px 8px 0 rgba(84, 39, 0, .45);
+      transform: rotate(1deg);
+      user-select: none;
+    }
+
+    .title span {
+      background: linear-gradient(90deg, #ff2f6b, #ffea44, #3cff5a, #27d7ff, #9d5cff, #ff62db);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-stroke: 1px #fff;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .machine {
+      position: relative;
+      padding: 54px 24px 26px 96px;
+      min-height: 620px;
+      background: linear-gradient(180deg, rgba(255, 226, 152, .94), rgba(255, 181, 77, .88));
+      border: 4px solid var(--pink);
+      border-radius: 28px;
+      box-shadow:
+        0 0 0 4px rgba(255,255,255,.4) inset,
+        0 0 18px var(--pink),
+        0 16px 35px rgba(0,0,0,.35);
+    }
+
+    .machine::before {
+      content: "BINGO";
+      position: absolute;
+      left: 16px;
+      top: 76px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 10px;
+      color: rgba(255, 255, 255, .36);
+      text-shadow: 0 2px 0 rgba(130,75,0,.14);
+    }
+
+    .event-line {
+      position: absolute;
+      left: 24px;
+      top: 22px;
+      right: 24px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(77, 35, 14, .34);
+      color: #fff8df;
+      font-size: 14px;
+      backdrop-filter: blur(4px);
+    }
+
+    .main-area {
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) 96px;
+      gap: 16px;
+    }
+
+    .board-wrap {
+      position: relative;
+      width: min(100%, 540px);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      padding: 12px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #9d4e14, #793809);
+      box-shadow: 0 8px 0 #5f2706, 0 14px 24px rgba(0,0,0,.28) inset;
+    }
+
+    .board {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 9px;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 13px;
+      cursor: default;
+      font-weight: 900;
+      font-size: clamp(24px, 4vw, 42px);
+      color: #bd4a24;
+      background: linear-gradient(180deg, #fff6d8, #ffe8b0 70%, #f6ce7d);
+      box-shadow: inset 0 3px 0 rgba(255,255,255,.88), inset 0 -5px 0 rgba(156,78,25,.22), 0 3px 0 #763007;
+      overflow: hidden;
+      transition: transform .16s ease, filter .16s ease;
+    }
+
+    .cell::before {
+      content: "★";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,.44);
+      font-size: 74px;
+      transform: scale(.9);
+    }
+
+    .cell.covered {
+      background: linear-gradient(180deg, #61ddff, #27bde7 62%, #0b8bc6);
+      box-shadow: inset 0 4px 0 rgba(255,255,255,.5), inset 0 -6px 0 rgba(4,83,128,.35), 0 3px 0 #055c8b;
+    }
+
+    .cell.covered::before {
+      content: "";
+      width: 64%;
+      height: 54%;
+      border-radius: 48% 48% 42% 42%;
+      background:
+        radial-gradient(circle at 30% 36%, #74d7ff 0 4px, transparent 5px),
+        radial-gradient(circle at 68% 36%, #74d7ff 0 4px, transparent 5px),
+        radial-gradient(ellipse at 50% 74%, #74d7ff 0 10px, transparent 11px),
+        linear-gradient(180deg, #d8fbff, #aaf2ff);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.22);
+    }
+
+    .cell.covered .num { opacity: 0; }
+    .cell.hit { animation: pop .24s ease; filter: brightness(1.12); }
+    .cell.line-win { outline: 4px solid #ff31e6; box-shadow: 0 0 18px #ff31e6, inset 0 4px 0 rgba(255,255,255,.5), inset 0 -6px 0 rgba(4,83,128,.35), 0 3px 0 #055c8b; }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1) rotate(-2deg); }
+      100% { transform: scale(1); }
+    }
+
+    .node {
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #e942e9;
+      box-shadow: 0 0 7px #fff, 0 0 10px #ff39e8;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .reward-strip {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-content: stretch;
+    }
+
+    .reward, .bottom-reward {
+      min-height: 62px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #5a250a;
+      font-weight: 900;
+      background: radial-gradient(circle at 50% 30%, #fff9c8, #ffbd55 52%, #cf6d21);
+      border: 2px solid rgba(145,62,12,.38);
+      box-shadow: inset 0 3px 0 rgba(255,255,255,.45), 0 5px 10px rgba(0,0,0,.14);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .reward::before, .bottom-reward::before {
+      content: "✦";
+      position: absolute;
+      left: 9px;
+      top: 4px;
+      color: rgba(255,255,255,.75);
+    }
+
+    .reward.done, .bottom-reward.done {
+      filter: saturate(1.25) brightness(1.18);
+      box-shadow: 0 0 14px #ffea39, inset 0 3px 0 rgba(255,255,255,.5);
+      outline: 3px solid rgba(255, 249, 99, .7);
+    }
+
+    .bottom-bar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .bottom-reward { min-height: 58px; }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    button.action {
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 28px;
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+      color: white;
+      text-shadow: 0 2px 0 rgba(0,0,0,.2);
+      box-shadow: inset 0 3px 0 rgba(255,255,255,.52), 0 6px 0 rgba(0,0,0,.18), 0 0 10px rgba(255,255,255,.35);
+      transition: transform .12s ease, filter .12s ease;
+    }
+
+    button.action:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    button.action:active { transform: translateY(2px); }
+    .blue-btn { background: linear-gradient(180deg, #7ad8ff, #2086df); }
+    .orange-btn { background: linear-gradient(180deg, #ffd36a, #ec7b15); }
+    .pink-btn { background: linear-gradient(180deg, #ff80ee, #dd27b8); }
+    .gray-btn { background: linear-gradient(180deg, #c7c7c7, #666); }
+
+    .side-panel {
+      padding: 20px 16px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,206,113,.94), rgba(141,75,24,.9));
+      border: 4px solid var(--pink);
+      box-shadow: 0 0 20px var(--pink), inset 0 0 0 4px rgba(255,255,255,.24);
+      color: #fff;
+    }
+
+    .side-title {
+      width: fit-content;
+      margin: 0 auto 16px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ffcef3, #ad70e5);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 900;
+      text-shadow: 0 2px 0 rgba(0,0,0,.2);
+    }
+
+    .jackpot {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+      padding: 18px 10px;
+      border-radius: 20px;
+      background: rgba(109, 54, 13, .55);
+    }
+
+    .orb {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      background: radial-gradient(circle, #fff7a7 0 18%, #ffe33a 35%, #bd7b00 68%, #7d4100 100%);
+      box-shadow: 0 0 22px #ffef3d, inset 0 4px 8px rgba(255,255,255,.62);
+    }
+
+    .stats {
+      margin-top: 16px;
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      color: #fff5cc;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.18);
+    }
+
+    .settings {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 241, 196, .92);
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #7a3510;
+    }
+
+    .weight-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .weight-grid input, .small-input {
+      width: 100%;
+      min-width: 0;
+      border: 2px solid rgba(135,67,17,.25);
+      border-radius: 9px;
+      padding: 7px 6px;
+      background: #fffaf0;
+      color: #6a2e0e;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .sim-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      align-items: end;
+    }
+
+    .mini-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 900;
+      color: white;
+      background: linear-gradient(180deg, #ffb84f, #cf6218);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.45);
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    .result-table th, .result-table td {
+      padding: 6px 7px;
+      border-bottom: 1px solid rgba(122,53,16,.16);
+      text-align: right;
+    }
+
+    .result-table th:first-child, .result-table td:first-child { text-align: left; }
+    .result-table tbody tr:nth-child(odd) { background: rgba(255,255,255,.34); }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .side-panel { order: -1; }
+      .machine { padding-left: 76px; }
+      .main-area { grid-template-columns: 1fr 84px; }
+      .settings { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 12px 8px 20px; }
+      .machine { padding: 52px 12px 18px; }
+      .machine::before { display: none; }
+      .main-area { grid-template-columns: 1fr; }
+      .reward-strip { grid-template-columns: repeat(5, 1fr); }
+      .bottom-bar { grid-template-columns: repeat(4, 1fr); }
+      button.action { width: 100%; font-size: 19px; }
+      .sim-controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1 class="title">幸运 <span>BINGO!</span></h1>
+
+    <section class="app">
+      <div class="machine">
+        <div class="event-line">活动时间：Bingo Lottery Simulator ｜ 单人前端模拟 ｜ 按权重随机翻格</div>
+        <div class="main-area">
+          <div>
+            <div class="board-wrap">
+              <div id="nodes"></div>
+              <div id="board" class="board"></div>
+            </div>
+            <div id="bottomRewards" class="bottom-bar"></div>
+          </div>
+          <div id="rightRewards" class="reward-strip"></div>
+        </div>
+        <div class="controls">
+          <button class="action blue-btn" id="drawOneBtn">开启一次</button>
+          <button class="action orange-btn" id="drawTenBtn">开启十次</button>
+          <button class="action pink-btn" id="drawCustomBtn">开启 N 次</button>
+          <button class="action gray-btn" id="resetBtn">重置本轮</button>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="side-title">本期大奖</div>
+        <div class="jackpot">
+          <div class="orb">🐱</div>
+          <div class="orb">🗡️</div>
+          <div class="orb">🎁</div>
+        </div>
+        <div class="stats">
+          <div class="stat-row"><span>本轮抽数</span><strong id="drawCount">0</strong></div>
+          <div class="stat-row"><span>已翻开格子</span><strong id="activeCount">0 / 25</strong></div>
+          <div class="stat-row"><span>已获奖励线</span><strong id="prizeCount">0 / 12</strong></div>
+          <div class="stat-row"><span>重复翻开</span><strong id="repeatCount">0</strong></div>
+          <div class="stat-row"><span>最近抽中</span><strong id="lastHit">-</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="settings">
+      <div class="card">
+        <h2>5×5 格子权重</h2>
+        <div id="weightGrid" class="weight-grid"></div>
+        <p style="margin:10px 0 0;font-size:13px;line-height:1.6;">数值是权重，不必加起来等于 100。权重越高，越容易被抽中。</p>
+      </div>
+
+      <div class="card">
+        <h2>批量模拟</h2>
+        <div class="sim-controls">
+          <label>模拟次数<br><input id="simTimes" class="small-input" type="number" min="1" value="1000"></label>
+          <label>指定抽数<br><input id="ticketCount" class="small-input" type="number" min="1" value="10"></label>
+          <label>开启 N 次<br><input id="customDraws" class="small-input" type="number" min="1" value="30"></label>
+          <button id="simulateBtn" class="mini-btn">开始模拟</button>
+          <button id="restoreBtn" class="mini-btn">恢复默认权重</button>
+          <button id="copyBtn" class="mini-btn">复制结果</button>
+        </div>
+        <div id="simResult"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DEFAULT_WEIGHTS = [
+      [3.28, 8.20, 0.66, 6.56, 1.64],
+      [8.20, 3.28, 8.20, 3.28, 6.56],
+      [0.82, 1.64, 0.66, 1.64, 8.20],
+      [3.28, 0.33, 3.28, 1.64, 8.20],
+      [0.49, 8.20, 3.28, 8.20, 0.33]
+    ];
+
+    const conditions = [];
+    for (let r = 0; r < 5; r++) conditions.push(Array.from({ length: 5 }, (_, c) => [r, c]));
+    for (let c = 0; c < 5; c++) conditions.push(Array.from({ length: 5 }, (_, r) => [r, c]));
+    conditions.push(Array.from({ length: 5 }, (_, i) => [i, i]));
+    conditions.push(Array.from({ length: 5 }, (_, i) => [i, 4 - i]));
+
+    const rewardLabels = ["R1", "R2", "R3", "R4", "R5", "C1", "C2", "C3", "C4", "C5", "D1", "D2"];
+    const state = {
+      activated: Array.from({ length: 5 }, () => Array(5).fill(false)),
+      hitCounts: Array.from({ length: 5 }, () => Array(5).fill(0)),
+      prizesWon: Array(12).fill(false),
+      drawCount: 0,
+      repeatCount: 0,
+      lastHit: null,
+      simText: ""
+    };
+
+    const boardEl = document.getElementById("board");
+    const nodesEl = document.getElementById("nodes");
+    const weightGridEl = document.getElementById("weightGrid");
+    const rightRewardsEl = document.getElementById("rightRewards");
+    const bottomRewardsEl = document.getElementById("bottomRewards");
+
+    function buildUI() {
+      boardEl.innerHTML = "";
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell covered";
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          cell.innerHTML = `<span class="num"></span>`;
+          boardEl.appendChild(cell);
+        }
+      }
+
+      nodesEl.innerHTML = "";
+      for (let r = 1; r < 5; r++) {
+        for (let c = 1; c < 5; c++) {
+          const node = document.createElement("span");
+          node.className = "node";
+          node.style.left = `calc(${c * 20}% + ${c * 1.8}px)`;
+          node.style.top = `calc(${r * 20}% + ${r * 1.8}px)`;
+          nodesEl.appendChild(node);
+        }
+      }
+
+      weightGridEl.innerHTML = "";
+      DEFAULT_WEIGHTS.flat().forEach((v, idx) => {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "0.01";
+        input.min = "0";
+        input.value = v.toFixed(2);
+        input.dataset.idx = idx;
+        weightGridEl.appendChild(input);
+      });
+
+      rightRewardsEl.innerHTML = "";
+      bottomRewardsEl.innerHTML = "";
+      rewardLabels.slice(0, 5).forEach((label, i) => rightRewardsEl.appendChild(rewardNode(label, i, "reward")));
+      rewardLabels.slice(5).forEach((label, i) => bottomRewardsEl.appendChild(rewardNode(label, i + 5, "bottom-reward")));
+      render();
+    }
+
+    function rewardNode(label, idx, className) {
+      const el = document.createElement("div");
+      el.className = className;
+      el.dataset.reward = idx;
+      el.textContent = label;
+      return el;
+    }
+
+    function getWeights() {
+      const values = Array.from(weightGridEl.querySelectorAll("input")).map(input => Math.max(0, Number(input.value) || 0));
+      const sum = values.reduce((a, b) => a + b, 0);
+      if (sum <= 0) throw new Error("权重总和必须大于 0。请至少保留一个正数。 ");
+      return values.map(v => v / sum);
+    }
+
+    function weightedPick(prob) {
+      const x = Math.random();
+      let acc = 0;
+      for (let i = 0; i < prob.length; i++) {
+        acc += prob[i];
+        if (x <= acc) return i;
+      }
+      return prob.length - 1;
+    }
+
+    function draw(times = 1, animated = true) {
+      let prob;
+      try { prob = getWeights(); } catch (e) { alert(e.message); return; }
+      for (let t = 0; t < times; t++) {
+        const idx = weightedPick(prob);
+        const r = Math.floor(idx / 5);
+        const c = idx % 5;
+        state.drawCount += 1;
+        state.hitCounts[r][c] += 1;
+        state.lastHit = `${r + 1}-${c + 1}`;
+
+        if (state.activated[r][c]) {
+          state.repeatCount += 1;
+        } else {
+          state.activated[r][c] = true;
+          checkRelatedConditions(r, c);
+        }
+      }
+      render(animated);
+    }
+
+    function checkRelatedConditions(r, c) {
+      const related = new Set([r, 5 + c]);
+      if (r === c) related.add(10);
+      if (r + c === 4) related.add(11);
+
+      for (const condIdx of related) {
+        if (state.prizesWon[condIdx]) continue;
+        const ok = conditions[condIdx].every(([rr, cc]) => state.activated[rr][cc]);
+        if (ok) state.prizesWon[condIdx] = true;
+      }
+    }
+
+    function render(animated = false) {
+      boardEl.querySelectorAll(".cell").forEach(cell => {
+        const r = Number(cell.dataset.r);
+        const c = Number(cell.dataset.c);
+        const count = state.hitCounts[r][c];
+        cell.className = "cell" + (state.activated[r][c] ? "" : " covered");
+        if (count > 0 && state.lastHit === `${r + 1}-${c + 1}` && animated) cell.classList.add("hit");
+        cell.querySelector(".num").textContent = count > 0 ? count : "";
+        if (isCellOnWonLine(r, c)) cell.classList.add("line-win");
+      });
+
+      document.querySelectorAll("[data-reward]").forEach(el => {
+        const idx = Number(el.dataset.reward);
+        el.classList.toggle("done", state.prizesWon[idx]);
+      });
+
+      const activeCount = state.activated.flat().filter(Boolean).length;
+      const prizeCount = state.prizesWon.filter(Boolean).length;
+      document.getElementById("drawCount").textContent = state.drawCount;
+      document.getElementById("activeCount").textContent = `${activeCount} / 25`;
+      document.getElementById("prizeCount").textContent = `${prizeCount} / 12`;
+      document.getElementById("repeatCount").textContent = state.repeatCount;
+      document.getElementById("lastHit").textContent = state.lastHit || "-";
+    }
+
+    function isCellOnWonLine(r, c) {
+      return conditions.some((cond, idx) => state.prizesWon[idx] && cond.some(([rr, cc]) => rr === r && cc === c));
+    }
+
+    function resetRound() {
+      state.activated = Array.from({ length: 5 }, () => Array(5).fill(false));
+      state.hitCounts = Array.from({ length: 5 }, () => Array(5).fill(0));
+      state.prizesWon = Array(12).fill(false);
+      state.drawCount = 0;
+      state.repeatCount = 0;
+      state.lastHit = null;
+      render(false);
+    }
+
+    function simulate() {
+      let prob;
+      try { prob = getWeights(); } catch (e) { alert(e.message); return; }
+      const numSim = Math.max(1, Number(document.getElementById("simTimes").value) || 1000);
+      const ticketCount = Math.max(1, Number(document.getElementById("ticketCount").value) || 10);
+      const totalCounts = Array(12).fill(0);
+      const totalAtTicket = Array(12).fill(0);
+
+      for (let s = 0; s < numSim; s++) {
+        const activated = Array.from({ length: 5 }, () => Array(5).fill(false));
+        const prizesWon = Array(12).fill(false);
+        const times = Array(12).fill(0);
+        let count = 0;
+        let k = 0;
+        let recorded = false;
+
+        while (k < 12) {
+          count += 1;
+          const idx = weightedPick(prob);
+          const r = Math.floor(idx / 5);
+          const c = idx % 5;
+
+          if (!activated[r][c]) {
+            activated[r][c] = true;
+            const related = new Set([r, 5 + c]);
+            if (r === c) related.add(10);
+            if (r + c === 4) related.add(11);
+
+            const newPrizes = [];
+            for (const condIdx of related) {
+              if (!prizesWon[condIdx] && conditions[condIdx].every(([rr, cc]) => activated[rr][cc])) {
+                newPrizes.push(condIdx);
+              }
+            }
+            for (const condIdx of newPrizes) {
+              if (k < 12) {
+                times[k] = count;
+                prizesWon[condIdx] = true;
+                k += 1;
+              }
+            }
+          }
+
+          if (!recorded && (count === ticketCount || k === 12)) {
+            for (let n = 0; n < 12; n++) if (times[n] !== 0) totalAtTicket[n] += 1;
+            recorded = true;
+          }
+        }
+        for (let n = 0; n < 12; n++) totalCounts[n] += times[n];
+      }
+
+      const avg = totalCounts.map(v => v / numSim);
+      const probAt = totalAtTicket.map(v => 100 * v / numSim);
+      renderSimulation(avg, probAt, numSim, ticketCount);
+    }
+
+    function renderSimulation(avg, probAt, numSim, ticketCount) {
+      let rows = "";
+      for (let i = 0; i < 12; i++) {
+        rows += `<tr><td>第 ${i + 1} 个奖励</td><td>${avg[i].toFixed(2)}</td><td>${probAt[i].toFixed(2)}%</td></tr>`;
+      }
+      const html = `
+        <table class="result-table">
+          <thead><tr><th>目标</th><th>平均获得抽数</th><th>${ticketCount} 抽内至少获得概率</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      document.getElementById("simResult").innerHTML = html;
+      state.simText = `模拟次数：${numSim}\n指定抽数：${ticketCount}\n` + avg.map((v, i) => `第${i + 1}个奖励：平均${v.toFixed(2)}抽，${ticketCount}抽内至少获得概率${probAt[i].toFixed(2)}%`).join("\n");
+    }
+
+    function restoreWeights() {
+      Array.from(weightGridEl.querySelectorAll("input")).forEach((input, idx) => {
+        input.value = DEFAULT_WEIGHTS.flat()[idx].toFixed(2);
+      });
+    }
+
+    async function copyResult() {
+      if (!state.simText) {
+        alert("请先运行一次批量模拟。");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(state.simText);
+        alert("结果已复制。 ");
+      } catch {
+        alert("浏览器未允许复制，请手动选择表格内容复制。 ");
+      }
+    }
+
+    document.getElementById("drawOneBtn").addEventListener("click", () => draw(1));
+    document.getElementById("drawTenBtn").addEventListener("click", () => draw(10));
+    document.getElementById("drawCustomBtn").addEventListener("click", () => draw(Math.max(1, Number(document.getElementById("customDraws").value) || 1)));
+    document.getElementById("resetBtn").addEventListener("click", resetRound);
+    document.getElementById("simulateBtn").addEventListener("click", simulate);
+    document.getElementById("restoreBtn").addEventListener("click", restoreWeights);
+    document.getElementById("copyBtn").addEventListener("click", copyResult);
+
+    buildUI();
+  </script>
+</body>
+</html>
