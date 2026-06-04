@@ -2,20 +2,17 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Lucky Bingo Simulator</title>
   <style>
     :root {
       --pink: #ff4ff4;
-      --hot-pink: #ff2ccf;
       --gold: #ffd85a;
       --orange: #e88a25;
       --brown: #8c4f1f;
       --blue: #35c9ff;
       --blue-deep: #078fc7;
-      --cream: #fff0c6;
       --text: #5a290d;
-      --glass: rgba(255, 224, 149, .72);
     }
 
     * { box-sizing: border-box; }
@@ -26,9 +23,9 @@
       font-family: Arial, "Microsoft YaHei", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 15% 30%, rgba(93, 255, 62, .45), transparent 17rem),
-        radial-gradient(circle at 88% 26%, rgba(255, 54, 209, .35), transparent 18rem),
-        radial-gradient(circle at 70% 80%, rgba(85, 255, 221, .24), transparent 16rem),
+        radial-gradient(circle at 12% 30%, rgba(93, 255, 62, .38), transparent 17rem),
+        radial-gradient(circle at 88% 24%, rgba(255, 54, 209, .34), transparent 18rem),
+        radial-gradient(circle at 70% 84%, rgba(85, 255, 221, .20), transparent 16rem),
         linear-gradient(130deg, #24202e 0%, #251526 42%, #111827 100%);
       overflow-x: hidden;
     }
@@ -40,7 +37,6 @@
       background:
         repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 74px),
         repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 72px);
-      opacity: .8;
       pointer-events: none;
     }
 
@@ -59,10 +55,7 @@
       letter-spacing: 3px;
       color: #fff;
       -webkit-text-stroke: 2px #f52a7d;
-      text-shadow:
-        0 0 8px #fff,
-        0 0 18px #ff39e7,
-        4px 8px 0 rgba(84, 39, 0, .45);
+      text-shadow: 0 0 8px #fff, 0 0 18px #ff39e7, 4px 8px 0 rgba(84, 39, 0, .45);
       transform: rotate(1deg);
       user-select: none;
     }
@@ -89,10 +82,7 @@
       background: linear-gradient(180deg, rgba(255, 226, 152, .94), rgba(255, 181, 77, .88));
       border: 4px solid var(--pink);
       border-radius: 28px;
-      box-shadow:
-        0 0 0 4px rgba(255,255,255,.4) inset,
-        0 0 18px var(--pink),
-        0 16px 35px rgba(0,0,0,.35);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.4) inset, 0 0 18px var(--pink), 0 16px 35px rgba(0,0,0,.35);
     }
 
     .machine::before {
@@ -101,7 +91,6 @@
       left: 16px;
       top: 76px;
       writing-mode: vertical-rl;
-      text-orientation: mixed;
       font-size: 52px;
       font-weight: 900;
       letter-spacing: 10px;
@@ -120,6 +109,9 @@
       color: #fff8df;
       font-size: 14px;
       backdrop-filter: blur(4px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .main-area {
@@ -155,7 +147,6 @@
       place-items: center;
       border: 0;
       border-radius: 13px;
-      cursor: default;
       font-weight: 900;
       font-size: clamp(24px, 4vw, 42px);
       color: #bd4a24;
@@ -215,12 +206,13 @@
       pointer-events: none;
     }
 
-    .reward-strip {
+    .reward-strip, .bottom-bar {
       display: grid;
-      grid-template-columns: 1fr;
       gap: 8px;
-      align-content: stretch;
     }
+
+    .reward-strip { grid-template-columns: 1fr; align-content: stretch; }
+    .bottom-bar { grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 14px; }
 
     .reward, .bottom-reward {
       min-height: 62px;
@@ -249,15 +241,6 @@
       box-shadow: 0 0 14px #ffea39, inset 0 3px 0 rgba(255,255,255,.5);
       outline: 3px solid rgba(255, 249, 99, .7);
     }
-
-    .bottom-bar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .bottom-reward { min-height: 58px; }
 
     .controls {
       display: flex;
@@ -359,11 +342,7 @@
       box-shadow: 0 8px 24px rgba(0,0,0,.18);
     }
 
-    .card h2 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      color: #7a3510;
-    }
+    .card h2 { margin: 0 0 10px; font-size: 18px; color: #7a3510; }
 
     .weight-grid {
       display: grid;
@@ -401,41 +380,145 @@
       box-shadow: inset 0 2px 0 rgba(255,255,255,.45);
     }
 
-    .result-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      margin-top: 10px;
-      overflow: hidden;
-      border-radius: 10px;
-    }
-
-    .result-table th, .result-table td {
-      padding: 6px 7px;
-      border-bottom: 1px solid rgba(122,53,16,.16);
-      text-align: right;
-    }
-
+    .result-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+    .result-table th, .result-table td { padding: 6px 7px; border-bottom: 1px solid rgba(122,53,16,.16); text-align: right; }
     .result-table th:first-child, .result-table td:first-child { text-align: left; }
     .result-table tbody tr:nth-child(odd) { background: rgba(255,255,255,.34); }
 
     @media (max-width: 980px) {
       .app { grid-template-columns: 1fr; }
-      .side-panel { order: -1; }
       .machine { padding-left: 76px; }
       .main-area { grid-template-columns: 1fr 84px; }
       .settings { grid-template-columns: 1fr; }
+      .side-panel {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+      .side-title { grid-column: 1 / -1; margin-bottom: 0; }
+      .jackpot { grid-template-columns: repeat(3, 1fr); padding: 12px; }
+      .stats { margin-top: 0; }
     }
 
     @media (max-width: 640px) {
-      .page { padding: 12px 8px 20px; }
-      .machine { padding: 52px 12px 18px; }
+      body { background-attachment: scroll; }
+      .page { width: 100%; padding: 10px 8px 18px; }
+      .title {
+        margin: 0 0 8px;
+        font-size: clamp(34px, 12vw, 54px);
+        letter-spacing: 1px;
+        -webkit-text-stroke: 1px #f52a7d;
+        text-shadow: 0 0 7px #fff, 0 0 13px #ff39e7, 2px 4px 0 rgba(84,39,0,.38);
+      }
+      .app { display: flex; flex-direction: column; gap: 12px; }
+      .machine {
+        order: 1;
+        width: 100%;
+        min-height: 0;
+        padding: 12px 10px 14px;
+        border-width: 3px;
+        border-radius: 22px;
+        box-shadow: 0 0 0 3px rgba(255,255,255,.35) inset, 0 0 14px var(--pink), 0 10px 22px rgba(0,0,0,.28);
+      }
       .machine::before { display: none; }
-      .main-area { grid-template-columns: 1fr; }
-      .reward-strip { grid-template-columns: repeat(5, 1fr); }
-      .bottom-bar { grid-template-columns: repeat(4, 1fr); }
-      button.action { width: 100%; font-size: 19px; }
+      .event-line {
+        position: static;
+        display: block;
+        margin: 2px 4px 10px;
+        padding: 7px 10px;
+        font-size: 12px;
+        line-height: 1.35;
+        white-space: normal;
+        border-radius: 14px;
+        text-align: center;
+      }
+      .main-area { display: flex; flex-direction: column; gap: 10px; }
+      .board-wrap {
+        width: 100%;
+        max-width: 430px;
+        padding: 9px;
+        border-radius: 17px;
+        box-shadow: 0 5px 0 #5f2706, 0 10px 18px rgba(0,0,0,.25) inset;
+      }
+      .board { gap: clamp(5px, 1.55vw, 8px); }
+      .cell { border-radius: 11px; font-size: clamp(24px, 8vw, 34px); }
+      .cell::before { font-size: clamp(46px, 15vw, 66px); }
+      .cell.line-win { outline-width: 3px; }
+      .node {
+        width: 9px;
+        height: 9px;
+        transform: translate(-1px, -1px);
+      }
+      .reward-strip {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
+        order: 3;
+      }
+      .bottom-bar {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .reward, .bottom-reward {
+        min-height: 54px;
+        border-radius: 12px;
+        font-size: 16px;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        margin-top: 12px;
+      }
+      button.action {
+        width: 100%;
+        padding: 11px 8px;
+        border-radius: 14px;
+        font-size: 17px;
+      }
+      .side-panel {
+        order: 2;
+        width: 100%;
+        padding: 12px;
+        border-width: 3px;
+        border-radius: 20px;
+        display: block;
+      }
+      .side-title { margin: 0 auto 10px; font-size: 17px; }
+      .jackpot {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 10px;
+      }
+      .orb {
+        width: clamp(58px, 18vw, 72px);
+        height: clamp(58px, 18vw, 72px);
+      }
+      .stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+      .stat-row { padding: 7px 8px; }
+      .settings { grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+      .card { padding: 12px; border-radius: 16px; }
+      .card h2 { font-size: 16px; }
+      .weight-grid { gap: 5px; }
+      .weight-grid input, .small-input { padding: 7px 3px; font-size: 13px; }
       .sim-controls { grid-template-columns: 1fr; }
+      .result-table { font-size: 12px; }
+      .result-table th, .result-table td { padding: 5px 4px; }
+    }
+
+    @media (max-width: 380px) {
+      .page { padding-left: 6px; padding-right: 6px; }
+      .board-wrap { padding: 7px; }
+      .controls { grid-template-columns: 1fr; }
+      .bottom-bar { grid-template-columns: repeat(3, 1fr); }
+      .reward-strip { grid-template-columns: repeat(3, 1fr); }
+      .stats { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -543,7 +626,7 @@
           cell.className = "cell covered";
           cell.dataset.r = r;
           cell.dataset.c = c;
-          cell.innerHTML = `<span class="num"></span>`;
+          cell.innerHTML = '<span class="num"></span>';
           boardEl.appendChild(cell);
         }
       }
@@ -588,7 +671,7 @@
     function getWeights() {
       const values = Array.from(weightGridEl.querySelectorAll("input")).map(input => Math.max(0, Number(input.value) || 0));
       const sum = values.reduce((a, b) => a + b, 0);
-      if (sum <= 0) throw new Error("权重总和必须大于 0。请至少保留一个正数。 ");
+      if (sum <= 0) throw new Error("权重总和必须大于 0。请至少保留一个正数。");
       return values.map(v => v / sum);
     }
 
@@ -627,7 +710,6 @@
       const related = new Set([r, 5 + c]);
       if (r === c) related.add(10);
       if (r + c === 4) related.add(11);
-
       for (const condIdx of related) {
         if (state.prizesWon[condIdx]) continue;
         const ok = conditions[condIdx].every(([rr, cc]) => state.activated[rr][cc]);
@@ -701,12 +783,9 @@
             const related = new Set([r, 5 + c]);
             if (r === c) related.add(10);
             if (r + c === 4) related.add(11);
-
             const newPrizes = [];
             for (const condIdx of related) {
-              if (!prizesWon[condIdx] && conditions[condIdx].every(([rr, cc]) => activated[rr][cc])) {
-                newPrizes.push(condIdx);
-              }
+              if (!prizesWon[condIdx] && conditions[condIdx].every(([rr, cc]) => activated[rr][cc])) newPrizes.push(condIdx);
             }
             for (const condIdx of newPrizes) {
               if (k < 12) {
@@ -735,12 +814,11 @@
       for (let i = 0; i < 12; i++) {
         rows += `<tr><td>第 ${i + 1} 个奖励</td><td>${avg[i].toFixed(2)}</td><td>${probAt[i].toFixed(2)}%</td></tr>`;
       }
-      const html = `
+      document.getElementById("simResult").innerHTML = `
         <table class="result-table">
           <thead><tr><th>目标</th><th>平均获得抽数</th><th>${ticketCount} 抽内至少获得概率</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>`;
-      document.getElementById("simResult").innerHTML = html;
       state.simText = `模拟次数：${numSim}\n指定抽数：${ticketCount}\n` + avg.map((v, i) => `第${i + 1}个奖励：平均${v.toFixed(2)}抽，${ticketCount}抽内至少获得概率${probAt[i].toFixed(2)}%`).join("\n");
     }
 
@@ -757,9 +835,9 @@
       }
       try {
         await navigator.clipboard.writeText(state.simText);
-        alert("结果已复制。 ");
+        alert("结果已复制。");
       } catch {
-        alert("浏览器未允许复制，请手动选择表格内容复制。 ");
+        alert("浏览器未允许复制，请手动选择表格内容复制。");
       }
     }
 
